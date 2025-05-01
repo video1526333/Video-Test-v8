@@ -506,37 +506,47 @@ nav ul li.active {
 
 #videoPlayerModal .close-button {
   position: fixed !important;
-  top: 30px !important;
-  right: 30px !important;
+  top: 24px !important;
+  right: 24px !important;
   z-index: 3000 !important;
-  width: 70px !important;
-  height: 70px !important;
-  background: #fff !important;
-  color: #d32f2f !important;
+  width: 48px !important;
+  height: 48px !important;
+  background: rgba(0,0,0,0.55) !important;
+  color: #fff !important;
   border-radius: 50% !important;
-  border: 3px solid #d32f2f !important;
-  font-size: 3rem !important;
-  font-weight: bold !important;
+  border: none !important;
+  font-size: 2.2rem !important;
+  font-weight: 400 !important;
   display: flex !important;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
 }
-
+#videoPlayerModal .close-button:hover {
+  background: rgba(0,0,0,0.85) !important;
+  color: #ff5252 !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+}
 #videoPlayerModal .close-button::after {
-  content: "关闭";
-  display: block;
-  font-size: 1.2rem;
-  color: #d32f2f;
-  margin-top: 4px;
-  font-weight: bold;
-  letter-spacing: 2px;
-  background: rgba(255,255,255,0.85);
+  content: none;
+}
+#videoPlayerModal .close-button[aria-label]:hover::before {
+  content: attr(aria-label);
+  position: absolute;
+  top: 110%;
+  right: 50%;
+  transform: translateX(50%);
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  font-size: 1rem;
+  padding: 4px 12px;
   border-radius: 6px;
-  padding: 2px 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.10);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 1;
+  z-index: 4000;
 }
 
 .modal-poster img {
