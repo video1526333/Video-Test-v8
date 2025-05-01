@@ -471,7 +471,8 @@ nav ul li.active {
   width: 100%;
   aspect-ratio: 16/9;
   background: #000;
-  max-height: 60vh;
+  max-height: 50vh;
+  min-height: 0;
 }
 
 #videoPlayer {
@@ -498,11 +499,14 @@ nav ul li.active {
   flex-direction: column;
   gap: 1rem;
   margin: 0 auto;
+  overflow-y: auto;
+  max-height: 90vh;
 }
 
 .video-title-container {
   text-align: center;
   padding-bottom: 0.5rem;
+  min-height: 0;
 }
 
 #videoPlayerModal .close-button {
