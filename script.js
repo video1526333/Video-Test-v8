@@ -2126,47 +2126,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Plyr player instance
     let plyrPlayer = null;
-    // Initialize Plyr after DOMContentLoaded
     const videoPlayerElem = document.getElementById('videoPlayer');
-    if (window.Plyr && videoPlayerElem) {
+    // Function to (re)initialize Plyr with correct hideControls value
+    function initPlyrPlayer() {
+        if (!window.Plyr || !videoPlayerElem) return;
+        // Destroy previous instance if exists
+        if (plyrPlayer && typeof plyrPlayer.destroy === 'function') {
+            plyrPlayer.destroy();
+        }
+        // Get setting from localStorage (default true)
+        const alwaysShow = localStorage.getItem('alwaysShowControls');
+        const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
                 'play-large', 'play', 'progress', 'current-time', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
-            hideControls: false, // Always show controls
+            hideControls: !alwaysShowBool, // true = auto-hide, false = always show
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
             disableContextMenu: false,
-            invertTime: false // Show current/total time instead of remaining time
+            invertTime: false
         });
-        // Make controls always visible
+        // Update controls class for extra robustness
         if (plyrPlayer.elements && plyrPlayer.elements.controls) {
-            plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-        }
-        // --- Plyr controls always visible setting logic ---
-        function updatePlyrControlsVisibility() {
-            const alwaysShow = localStorage.getItem('alwaysShowControls');
-            const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
-            if (plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
-                if (alwaysShowBool) {
-                    plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-                } else {
-                    plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
-                }
+            if (alwaysShowBool) {
+                plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+            } else {
+                plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
             }
         }
-
-        // Set checkbox state from localStorage (default true)
-        if (alwaysShowControlsCheckbox) {
-            const stored = localStorage.getItem('alwaysShowControls');
-            alwaysShowControlsCheckbox.checked = stored === null ? true : stored === 'true';
-            alwaysShowControlsCheckbox.addEventListener('change', function() {
-                localStorage.setItem('alwaysShowControls', this.checked ? 'true' : 'false');
-                updatePlyrControlsVisibility();
-            });
-        }
-
         // Listen for Plyr fullscreen events
         if (plyrPlayer && plyrPlayer.on) {
             plyrPlayer.on('enterfullscreen', () => {
@@ -2184,10 +2173,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
-
-        // Initial update
-        updatePlyrControlsVisibility();
     }
+
+    // Set checkbox state from localStorage (default true) and wire up event
+    if (alwaysShowControlsCheckbox) {
+        const stored = localStorage.getItem('alwaysShowControls');
+        alwaysShowControlsCheckbox.checked = stored === null ? true : stored === 'true';
+        alwaysShowControlsCheckbox.addEventListener('change', function() {
+            localStorage.setItem('alwaysShowControls', this.checked ? 'true' : 'false');
+            initPlyrPlayer();
+        });
+    }
+
+    // Initialize Plyr on page load
+    initPlyrPlayer();
 
     // Loader and Error Overlay logic for elderly users
     const loaderOverlay = document.getElementById('loaderOverlay');
