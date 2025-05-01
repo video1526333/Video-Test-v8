@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('passwordInput');
     const submitPasswordButton = document.getElementById('submitPassword');
     const passwordMessage = document.getElementById('passwordMessage');
+    // Plyr controls always visible checkbox
+    const alwaysShowControlsCheckbox = document.getElementById('alwaysShowControlsCheckbox');
 
     // Share elements
     const shareButton = document.getElementById('shareButton');
@@ -2142,6 +2144,49 @@ document.addEventListener('DOMContentLoaded', () => {
         if (plyrPlayer.elements && plyrPlayer.elements.controls) {
             plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
         }
+        // --- Plyr controls always visible setting logic ---
+        function updatePlyrControlsVisibility() {
+            const alwaysShow = localStorage.getItem('alwaysShowControls');
+            const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
+            if (plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
+                if (alwaysShowBool) {
+                    plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+                } else {
+                    plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
+                }
+            }
+        }
+
+        // Set checkbox state from localStorage (default true)
+        if (alwaysShowControlsCheckbox) {
+            const stored = localStorage.getItem('alwaysShowControls');
+            alwaysShowControlsCheckbox.checked = stored === null ? true : stored === 'true';
+            alwaysShowControlsCheckbox.addEventListener('change', function() {
+                localStorage.setItem('alwaysShowControls', this.checked ? 'true' : 'false');
+                updatePlyrControlsVisibility();
+            });
+        }
+
+        // Listen for Plyr fullscreen events
+        if (plyrPlayer && plyrPlayer.on) {
+            plyrPlayer.on('enterfullscreen', () => {
+                const alwaysShow = localStorage.getItem('alwaysShowControls');
+                const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
+                if (!alwaysShowBool && plyrPlayer.elements && plyrPlayer.elements.controls) {
+                    plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
+                }
+            });
+            plyrPlayer.on('exitfullscreen', () => {
+                const alwaysShow = localStorage.getItem('alwaysShowControls');
+                const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
+                if (alwaysShowBool && plyrPlayer.elements && plyrPlayer.elements.controls) {
+                    plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+                }
+            });
+        }
+
+        // Initial update
+        updatePlyrControlsVisibility();
     }
 
     // Loader and Error Overlay logic for elderly users
