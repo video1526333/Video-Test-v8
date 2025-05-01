@@ -2130,10 +2130,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to (re)initialize Plyr with correct hideControls value
     function initPlyrPlayer() {
         if (!window.Plyr || !videoPlayerElem) return;
-        // Destroy previous instance if exists
+        // --- Preserve video state ---
+        let prevSrc = videoPlayerElem.currentSrc || videoPlayerElem.src;
+        let prevTime = videoPlayerElem.currentTime || 0;
+        let wasPlaying = !videoPlayerElem.paused && !videoPlayerElem.ended;
+        // If using HLS.js, destroy it first
+        if (window.hlsPlayer && typeof window.hlsPlayer.destroy === 'function') {
+            try { window.hlsPlayer.destroy(); } catch (e) {}
+            window.hlsPlayer = null;
+        }
+        // Destroy previous Plyr instance if exists
         if (plyrPlayer && typeof plyrPlayer.destroy === 'function') {
             plyrPlayer.destroy();
         }
+        // Remove all sources from video element to avoid Plyr bugs
+        videoPlayerElem.removeAttribute('src');
+        while (videoPlayerElem.firstChild) videoPlayerElem.removeChild(videoPlayerElem.firstChild);
+        videoPlayerElem.load();
         // Get setting from localStorage (default true)
         const alwaysShow = localStorage.getItem('alwaysShowControls');
         const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
@@ -2172,6 +2185,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
                 }
             });
+        }
+        // --- Restore video state ---
+        if (prevSrc) {
+            videoPlayerElem.src = prevSrc;
+            videoPlayerElem.load();
+            videoPlayerElem.currentTime = prevTime;
+            if (wasPlaying) {
+                videoPlayerElem.play().catch(()=>{});
+            }
         }
     }
 
