@@ -1482,6 +1482,10 @@ button:hover,
   color: #005fa3 !important;
   border-color: #005fa3 !important;
 }
+
+.plyr__control--overlaid svg{
+  left: 8px !important;
+}
 /* Prevent Plyr controls from auto-hiding */
 .plyr--video .plyr__controls {
   opacity: 1 !important;
