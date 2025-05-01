@@ -1406,9 +1406,9 @@ button:hover,
 .plyr__controls button,
 .plyr__controls input[type=range],
 .plyr__controls .plyr__control {
-  font-size: 2.2rem !important;
-  min-width: 60px !important;
-  min-height: 60px !important;
+  font-size: 20px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
   padding: 16px !important;
   margin: 0 8px !important;
   background: #222 !important;
