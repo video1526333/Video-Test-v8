@@ -1,3 +1,7 @@
+// Add this at the top of script.js, before DOMContentLoaded
+// Initialize NoSleep globally for wake-lock
+const noSleep = new NoSleep();
+
 function getWatchHistory() {
     return JSON.parse(localStorage.getItem('watchHistory') || '[]');
 }
@@ -59,12 +63,18 @@ function isEpisodeWatched(videoId, episodeName) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Wake Lock: NoSleep.js – enable on first user click
-    const noSleep = new NoSleep();
-    document.addEventListener('click', function enableNoSleep() {
+    // Wake Lock overlay: enable on first touch or click
+    const overlay = document.getElementById('wakeOverlay');
+    function enableWakeLock(e) {
+        if (e) e.preventDefault();
         noSleep.enable();
         console.log('Wake Lock enabled');
-    }, { once: true });
+        if (overlay) overlay.remove();
+    }
+    if (overlay) {
+        overlay.addEventListener('touchend', enableWakeLock, { once: true, passive: false });
+        overlay.addEventListener('click', enableWakeLock, { once: true });
+    }
 
     // --- Watch History Modal Logic ---
     const watchHistoryButton = document.getElementById('watchHistoryButton');
@@ -958,8 +968,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to play m3u8 videos
     function playM3u8Video(url, linkElement, retryCount = 0) {
-        // Ensure wake lock active when playback starts
-        acquireWakeLock();
+        // Enable wake lock immediately on playback start
+        try { noSleep.enable(); console.log('Wake Lock enabled (on play)'); } catch(e) {}
         const MAX_RETRIES = 3;
         showLoaderOverlay();
         // Add a global loading timeout to prevent hanging
@@ -2252,5 +2262,11 @@ document.addEventListener('DOMContentLoaded', () => {
       // Restore scroll only if no modal is open
       if (!document.querySelector('.modal.open')) document.body.style.overflow = '';
     }
+
+    // One-time listener: enable wake-lock on first user touch
+    document.addEventListener('touchend', () => {
+        noSleep.enable();
+        console.log('Wake Lock enabled (first touch)');
+    }, { once: true, passive: true });
 
 }); 
