@@ -470,9 +470,8 @@ nav ul li.active {
 .video-player-container {
   width: 100%;
   background: #000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  min-height: 240px;
 }
 
 #videoPlayer {
@@ -1497,4 +1496,9 @@ button:hover,
   opacity: 1 !important;
   visibility: visible !important;
   pointer-events: auto !important;
+}
+
+.plyr__controls {
+  position: static !important;
+  z-index: 1;
 }
