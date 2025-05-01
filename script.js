@@ -593,6 +593,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 playBtn.tabIndex = 0;
                 playBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
+                    // Enable wake lock immediately on user tap (for iOS)
+                    try {
+                        noSleep.enable();
+                        console.log('Wake Lock enabled (play button)');
+                    } catch (err) {
+                        console.warn('Wake Lock enable failed on play button tap:', err);
+                    }
                     showVideoDetails(video.vod_id);
                 });
                 // Share button
@@ -781,6 +788,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (isM3u8) {
                                 link.addEventListener('click', function (e) {
                                     e.preventDefault();
+                                    // Enable wake lock immediately on user tap (for iOS)
+                                    try {
+                                        noSleep.enable();
+                                        console.log('Wake Lock enabled (user gesture)');
+                                    } catch (err) {
+                                        console.warn('Wake Lock enable failed on tap:', err);
+                                    }
                                     playM3u8Video(url, this);
                                 });
                             } else {
@@ -1195,6 +1209,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Add click handler to start playback
             overlay.addEventListener('click', function() {
+                // Enable wake lock on overlay tap to resume playback
+                try { noSleep.enable(); console.log('Wake Lock enabled (overlay)'); } catch(err) { console.warn('Wake Lock enable failed on overlay tap:', err); }
                 videoPlayer.muted = false;
                 videoPlayer.play()
                     .then(() => {
@@ -1354,6 +1370,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Video card click
     videoGrid.addEventListener('click', (event) => {
+        // Enable wake lock immediately on user tap (for iOS)
+        try { noSleep.enable(); console.log('Wake Lock enabled (card click)'); } catch (err) { console.warn('Wake Lock enable failed on card click:', err); }
         const card = event.target.closest('.video-card');
         if (!card) return;
         const videoId = card.dataset.id;
@@ -1910,11 +1928,15 @@ document.addEventListener('DOMContentLoaded', () => {
     ctrlContainer.appendChild(nextBtn);
     // Add navigation handlers for episode controls
     prevBtn.addEventListener('click', () => {
+        // Enable wake lock on prev button click (user gesture)
+        try { noSleep.enable(); console.log('Wake Lock enabled (prev button)'); } catch(err) { console.warn('Wake Lock enable failed on prev button tap:', err); }
         if (currentEpisodeIndex > 0) {
             playEpisode(currentEpisodeIndex - 1);
         }
     });
     nextBtn.addEventListener('click', () => {
+        // Enable wake lock on next button click (user gesture)
+        try { noSleep.enable(); console.log('Wake Lock enabled (next button)'); } catch(err) { console.warn('Wake Lock enable failed on next button tap:', err); }
         if (currentEpisodeIndex < currentEpisodes.length - 1) {
             playEpisode(currentEpisodeIndex + 1);
         }
@@ -1930,6 +1952,8 @@ document.addEventListener('DOMContentLoaded', () => {
     selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
     videoContent.appendChild(selectBtn);
     selectBtn.addEventListener('click', () => {
+        // Enable wake lock on select episode tap (user gesture)
+        try { noSleep.enable(); console.log('Wake Lock enabled (select episode)'); } catch(err) { console.warn('Wake Lock enable failed on select episode tap:', err); }
         // Ensure episodes have been loaded
         if (!currentEpisodes || currentEpisodes.length === 0) {
             showToast('当前没有可选剧集', 'info');
@@ -1977,6 +2001,8 @@ document.addEventListener('DOMContentLoaded', () => {
     resumeBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:none;';
     videoContent.appendChild(resumeBtn);
     resumeBtn.addEventListener('click', () => {
+        // Enable wake lock immediately on user tap (for iOS)
+        try { noSleep.enable(); console.log('Wake Lock enabled (resume button)'); } catch(err) { console.warn('Wake Lock enable failed on resume button tap:', err); }
         if (!currentVideoId || !videoPlayer) return;
         const epName = currentEpisodes[currentEpisodeIndex].name;
         const resumeTime = getPlaybackPosition(currentVideoId, epName);
