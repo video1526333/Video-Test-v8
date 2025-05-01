@@ -483,6 +483,8 @@ nav ul li.active {
 
 #headerWatchListBtn{
   min-width: 130px;
+  margin: 0px 9px;
+  border-radius: 6px;
 }
 
 /* Video player modal styles */
