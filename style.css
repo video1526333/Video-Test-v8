@@ -503,6 +503,7 @@ nav ul li.active {
   margin: 0 auto;
   overflow-y: auto;
   max-height: 90vh;
+  overflow: visible !important;
 }
 
 .video-title-container {
@@ -1501,4 +1502,25 @@ button:hover,
 .plyr__controls {
   position: static !important;
   z-index: 1;
+}
+
+.video-player-container,
+.plyr,
+.plyr__video-wrapper {
+  position: static !important;
+  width: 100% !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.plyr__poster {
+  position: static !important;
+}
+
+#videoPlayer {
+  width: 100% !important;
+  height: auto !important;
+  object-fit: contain !important;
+  display: block;
+  background: #000;
 }
