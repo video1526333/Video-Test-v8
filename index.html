@@ -148,6 +148,17 @@
         </div>
     </div>
 
+    <!-- Loader Overlay for elderly users -->
+    <div id="loaderOverlay" style="display:none;" aria-live="polite" aria-label="加载中...">
+        <div class="loader-spinner"></div>
+        <div class="loader-text">加载中…</div>
+    </div>
+    <!-- Error Overlay for elderly users -->
+    <div id="errorOverlay" style="display:none;" aria-live="assertive" aria-label="加载失败">
+        <div class="error-text">视频加载失败，请重试。</div>
+        <button id="retryButton" aria-label="重试" style="font-size:1.5rem; padding:1rem 2rem; margin-top:1.5rem;">重试</button>
+    </div>
+
     <script src="script.js"></script>
 </body>
 

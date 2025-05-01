@@ -675,6 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update showVideoDetails to use maxRetries and retryDelay for video detail fetches
     async function showVideoDetails(videoId) {
+        showLoaderOverlay();
         // Add loading indicator specific to video details (only once)
         showToast('Loading video details...', 'info', 2000);
         const cacheKey = `video_details_${videoId}`;
@@ -703,7 +704,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (!data || !data.list || data.list.length === 0) {
                 showToast('Failed to load video details.', 'error');
-                return false;
+                hideLoaderOverlay();
+                return false; // Signal failure
             }
             const video = data.list[0]; // Assuming the first item is the one we want
 
@@ -843,8 +845,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 modalContent._scrollLockAttached = true;
             }
             
+            hideLoaderOverlay();
             return true; // Signal success
         } catch (error) {
+            hideLoaderOverlay();
             console.error('Error in showVideoDetails:', error);
             showToast('Failed to load video details. Please try again.', 'error');
             
@@ -933,32 +937,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to play m3u8 videos
     function playM3u8Video(url, linkElement, retryCount = 0) {
-        // Show the loading indicator
-        const loadingIndicator = document.getElementById('videoLoadingIndicator');
-        if (loadingIndicator) loadingIndicator.style.display = 'flex';
-
-        const videoPlayer = document.getElementById('videoPlayer');
-        // Remove any previous event listeners to avoid multiple triggers
-        if (videoPlayer._loaderListeners) {
-            videoPlayer._loaderListeners.forEach(({event, handler}) => {
-                videoPlayer.removeEventListener(event, handler);
-            });
-        }
-        videoPlayer._loaderListeners = [];
-        // Handler to hide loader
-        const hideLoader = () => {
-            if (loadingIndicator) loadingIndicator.style.display = 'none';
-        };
-        // Add listeners for canplay and playing
-        videoPlayer.addEventListener('canplay', hideLoader, { once: true });
-        videoPlayer.addEventListener('playing', hideLoader, { once: true });
-        videoPlayer._loaderListeners.push({event: 'canplay', handler: hideLoader});
-        videoPlayer._loaderListeners.push({event: 'playing', handler: hideLoader});
-
         const MAX_RETRIES = 3;
-        
+        showLoaderOverlay();
         // Add a global loading timeout to prevent hanging
         let loadingTimeout = setTimeout(() => {
+            hideLoaderOverlay();
+            showErrorOverlay(() => playM3u8Video(url, linkElement, retryCount + 1));
             showToast('Video loading timed out. Please try again.', 'error');
             if (hlsPlayer) {
                 try {
@@ -970,7 +954,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 hlsPlayer = null;
             }
-            // Don't close the modal here, just indicate the failure
         }, 15000); // 15 seconds timeout
         
         // Safety timeout to ensure page remains scrollable
@@ -1032,17 +1015,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Video loading error:', error);
             clearTimeout(loadingTimeout);
             clearTimeout(safetyTimeout);
-            
-            if (retryCount < MAX_RETRIES) {
+            hideLoaderOverlay();
+            if (retryCount < MAX_RETRIES - 1) {
                 showToast(`Video loading failed. Retrying... (${retryCount + 1}/${MAX_RETRIES})`, 'error', 2000);
                 setTimeout(() => {
                     playM3u8Video(url, linkElement, retryCount + 1);
                 }, 1500);
             } else {
-                showToast(`Failed to load video after ${MAX_RETRIES} attempts. Please try again later.`, 'error');
-                
-                // Show the recovery button after max retries
-                addScrollRecoveryButton();
+                showErrorOverlay(() => playM3u8Video(url, linkElement, 0));
             }
         };
 
@@ -1080,11 +1060,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 hlsPlayer.on(Hls.Events.MANIFEST_PARSED, function() {
                     clearTimeout(loadingTimeout);
                     clearTimeout(safetyTimeout);
-                    console.log('HLS manifest loaded successfully');
+                    hideLoaderOverlay();
                 });
                 
                 hlsPlayer.on(Hls.Events.MEDIA_ATTACHED, function() {
-                    console.log('HLS media attached successfully');
+                    hideLoaderOverlay();
                 });
 
                 hlsPlayer.loadSource(url);
@@ -1108,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearTimeout(mediaAttachmentTimeout);
                 });
             } catch (e) {
-                console.error('Exception during HLS setup:', e);
+                hideLoaderOverlay();
                 handleError(e);
             }
         } else {
@@ -1133,9 +1113,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 videoPlayer.addEventListener('loadedmetadata', function() {
                     clearTimeout(loadingTimeout);
                     clearTimeout(safetyTimeout);
+                    hideLoaderOverlay();
                 }, { once: true });
             } catch (e) {
-                console.error('Exception during native HLS setup:', e);
+                hideLoaderOverlay();
                 handleError(e);
             }
         }
@@ -1454,6 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Extra check to make sure scroll is restored
         document.body.style.overflow = '';
+        hideLoaderOverlay();
     });
 
     // Video player modal close
@@ -1481,6 +1463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // disable wake lock
         try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        hideLoaderOverlay();
     });
 
     // Share button click
@@ -2140,6 +2123,39 @@ document.addEventListener('DOMContentLoaded', () => {
         if (plyrPlayer.elements && plyrPlayer.elements.controls) {
             plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
         }
+    }
+
+    // Loader and Error Overlay logic for elderly users
+    const loaderOverlay = document.getElementById('loaderOverlay');
+    const errorOverlay = document.getElementById('errorOverlay');
+    const retryButton = document.getElementById('retryButton');
+
+    function showLoaderOverlay() {
+      if (loaderOverlay) loaderOverlay.style.display = 'flex';
+      // Prevent background scroll
+      document.body.style.overflow = 'hidden';
+    }
+    function hideLoaderOverlay() {
+      if (loaderOverlay) loaderOverlay.style.display = 'none';
+      // Restore scroll only if no modal is open
+      if (!document.querySelector('.modal.open')) document.body.style.overflow = '';
+    }
+    function showErrorOverlay(retryFn) {
+      if (errorOverlay) errorOverlay.style.display = 'flex';
+      if (retryButton && typeof retryFn === 'function') {
+        retryButton.onclick = () => {
+          hideErrorOverlay();
+          retryFn();
+        };
+        retryButton.focus();
+      }
+      // Prevent background scroll
+      document.body.style.overflow = 'hidden';
+    }
+    function hideErrorOverlay() {
+      if (errorOverlay) errorOverlay.style.display = 'none';
+      // Restore scroll only if no modal is open
+      if (!document.querySelector('.modal.open')) document.body.style.overflow = '';
     }
 
 }); 

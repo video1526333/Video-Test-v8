@@ -1519,3 +1519,72 @@ button:hover,
   position: static !important;
   z-index: 1;
 }
+
+/* Loader Overlay Styles */
+#loaderOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.85);
+  z-index: 3000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+  pointer-events: all;
+}
+.loader-spinner {
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #a370dd;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  animation: spin 1.2s linear infinite;
+  margin-bottom: 2rem;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.loader-text {
+  font-size: 2.2rem;
+  color: #fff;
+  text-align: center;
+  margin-top: 0.5rem;
+}
+
+/* Error Overlay Styles */
+#errorOverlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.92);
+  z-index: 3001;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: #fff;
+  pointer-events: all;
+}
+.error-text {
+  font-size: 2.2rem;
+  color: #ff5252;
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+#errorOverlay button {
+  background: #a370dd !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-size: 1.5rem !important;
+  padding: 1rem 2rem !important;
+  cursor: pointer;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+#errorOverlay button:active {
+  background: #7a4fcf !important;
+}
