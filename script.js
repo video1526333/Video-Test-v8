@@ -2175,7 +2175,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
-                'play-large', 'play', 'progress', 'current-time', 'fullscreen'
+                'play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
             hideControls: false, // Always show controls
