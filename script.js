@@ -122,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('passwordInput');
     const submitPasswordButton = document.getElementById('submitPassword');
     const passwordMessage = document.getElementById('passwordMessage');
+    // Video controls always visible setting
+    const alwaysShowControlsCheckbox = document.getElementById('alwaysShowControlsCheckbox');
 
     // Share elements
     const shareButton = document.getElementById('shareButton');
@@ -2126,6 +2128,28 @@ document.addEventListener('DOMContentLoaded', () => {
     let plyrPlayer = null;
     // Initialize Plyr after DOMContentLoaded
     const videoPlayerElem = document.getElementById('videoPlayer');
+    // Helper: get setting from localStorage (default true)
+    function getAlwaysShowControlsSetting() {
+      const val = localStorage.getItem('alwaysShowControls');
+      return val === null ? true : val === 'true';
+    }
+    // Helper: set setting in localStorage
+    function setAlwaysShowControlsSetting(val) {
+      localStorage.setItem('alwaysShowControls', val ? 'true' : 'false');
+    }
+    // Helper: update Plyr controls visibility
+    function updatePlyrControlsVisibility() {
+      if (!plyrPlayer || !plyrPlayer.elements || !plyrPlayer.elements.controls) return;
+      const controls = plyrPlayer.elements.controls;
+      const alwaysShow = getAlwaysShowControlsSetting();
+      const isFullscreen = document.fullscreenElement === videoPlayerModal || document.fullscreenElement === videoPlayerElem;
+      if (alwaysShow || !isFullscreen) {
+        controls.classList.add('plyr-controls--always-visible');
+      } else {
+        controls.classList.remove('plyr-controls--always-visible');
+      }
+    }
+
     if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
@@ -2138,10 +2162,30 @@ document.addEventListener('DOMContentLoaded', () => {
             disableContextMenu: false,
             invertTime: false // Show current/total time instead of remaining time
         });
-        // Make controls always visible
-        if (plyrPlayer.elements && plyrPlayer.elements.controls) {
-            plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-        }
+        // Set controls visibility based on setting
+        updatePlyrControlsVisibility();
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', updatePlyrControlsVisibility);
+        // Also update on modal open/close
+        videoPlayerModal.addEventListener('classChange', updatePlyrControlsVisibility);
+    }
+
+    // On DOMContentLoaded, set checkbox state from localStorage
+    if (alwaysShowControlsCheckbox) {
+      alwaysShowControlsCheckbox.checked = getAlwaysShowControlsSetting();
+      alwaysShowControlsCheckbox.addEventListener('change', function() {
+        setAlwaysShowControlsSetting(this.checked);
+        updatePlyrControlsVisibility();
+      });
+    }
+    // Also update controls when video modal is opened/closed
+    function triggerClassChangeEvent(el) {
+      const evt = new Event('classChange');
+      el.dispatchEvent(evt);
+    }
+    if (videoPlayerModal) {
+      const observer = new MutationObserver(() => triggerClassChangeEvent(videoPlayerModal));
+      observer.observe(videoPlayerModal, { attributes: true, attributeFilter: ['class'] });
     }
 
     // Loader and Error Overlay logic for elderly users
