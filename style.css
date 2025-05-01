@@ -1466,13 +1466,21 @@ button:hover,
   font-size: 1.5rem !important;
 }
 .plyr--video .plyr__control--overlaid {
-  font-size: 4rem !important;
-  width: 100px !important;
-  height: 100px !important;
-  background: #fff !important;
-  color: #111 !important;
+  width: 64px !important;
+  height: 64px !important;
+  font-size: 2.5rem !important;
+  background: rgba(255,255,255,0.92) !important;
+  color: #222 !important;
   border-radius: 50% !important;
-  border: 4px solid #111 !important;
+  border: 2px solid #222 !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.18) !important;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.plyr--video .plyr__control--overlaid:hover {
+  background: #fff !important;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.28) !important;
+  color: #005fa3 !important;
+  border-color: #005fa3 !important;
 }
 /* Prevent Plyr controls from auto-hiding */
 .plyr--video .plyr__controls {
