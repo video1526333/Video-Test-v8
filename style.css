@@ -1492,3 +1492,8 @@ button:hover,
   visibility: visible !important;
   pointer-events: auto !important;
 }
+
+/* Hide Plyr remaining time display */
+.plyr__time--remaining {
+  display: none !important;
+}
