@@ -2153,35 +2153,37 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         // Toggle hiding controls on fullscreen based on preference
+        // Use a timeout handle for click-to-show-hide
+        let hideControlsTimeout = null;
         if (plyrPlayer && plyrPlayer.on) {
+            // Enter fullscreen: hide controls if pref is off
             plyrPlayer.on('enterfullscreen', () => {
                 const show = alwaysShowCheckbox ? alwaysShowCheckbox.checked : true;
                 if (!show && plyrPlayer.elements.container) {
-                    const container = plyrPlayer.elements.container;
-                    container.classList.add('hide-controls');
-                    // Add exit fullscreen overlay button
-                    if (!document.getElementById('exitFullscreenBtn')) {
-                        const exitBtn = document.createElement('button');
-                        exitBtn.id = 'exitFullscreenBtn';
-                        exitBtn.className = 'exit-fullscreen-btn';
-                        exitBtn.textContent = '退出';
-                        exitBtn.addEventListener('click', () => {
-                            if (plyrPlayer.fullscreen && plyrPlayer.fullscreen.exit) {
-                                plyrPlayer.fullscreen.exit();
-                            } else if (document.exitFullscreen) {
-                                document.exitFullscreen();
-                            }
-                        });
-                        container.appendChild(exitBtn);
-                    }
+                    plyrPlayer.elements.container.classList.add('hide-controls');
+                    // Inform user they can tap to show controls
+                    showToast('点击屏幕以显示控制按钮', 'info', 3000);
                 }
             });
+            // Exit fullscreen: always show controls and clear any pending timeouts
             plyrPlayer.on('exitfullscreen', () => {
-                const container = plyrPlayer.elements.container;
-                if (container) {
+                if (plyrPlayer.elements.container) {
+                    plyrPlayer.elements.container.classList.remove('hide-controls');
+                }
+                clearTimeout(hideControlsTimeout);
+            });
+        }
+        // Click on container in fullscreen can show controls temporarily
+        if (plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.container) {
+            const container = plyrPlayer.elements.container;
+            container.addEventListener('click', () => {
+                const show = alwaysShowCheckbox ? alwaysShowCheckbox.checked : true;
+                if (!show && container.classList.contains('hide-controls')) {
                     container.classList.remove('hide-controls');
-                    const exitBtn = document.getElementById('exitFullscreenBtn');
-                    if (exitBtn) exitBtn.remove();
+                    clearTimeout(hideControlsTimeout);
+                    hideControlsTimeout = setTimeout(() => {
+                        container.classList.add('hide-controls');
+                    }, 3000);
                 }
             });
         }

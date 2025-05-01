@@ -1596,18 +1596,3 @@ button:hover,
 .hide-controls .plyr__controls {
   display: none !important;
 }
-
-/* Style for the exit-fullscreen overlay button when controls are hidden */
-.exit-fullscreen-btn {
-  position: absolute !important;
-  top: 10px !important;
-  right: 10px !important;
-  z-index: 10000 !important;
-  background: rgba(0,0,0,0.5) !important;
-  color: #fff !important;
-  border: none !important;
-  padding: 0.5rem 1rem !important;
-  border-radius: 4px !important;
-  font-size: 1rem !important;
-  cursor: pointer !important;
-}
