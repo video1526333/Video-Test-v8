@@ -1884,29 +1884,85 @@ document.addEventListener('DOMContentLoaded', () => {
     ctrlContainer.style.cssText = 'display:flex; justify-content:center; gap:1rem;';
     ctrlContainer.appendChild(prevBtn);
     ctrlContainer.appendChild(nextBtn);
+    // Add navigation handlers for episode controls
+    prevBtn.addEventListener('click', () => {
+        if (currentEpisodeIndex > 0) {
+            playEpisode(currentEpisodeIndex - 1);
+        }
+    });
+    nextBtn.addEventListener('click', () => {
+        if (currentEpisodeIndex < currentEpisodes.length - 1) {
+            playEpisode(currentEpisodeIndex + 1);
+        }
+    });
+    // Insert controls into video player modal
+    const videoContent = videoPlayerModal.querySelector('.video-modal-content');
+    videoContent.appendChild(episodeControls);
+    videoContent.appendChild(ctrlContainer);
+    // Insert Select Episode button right below prev/next controls
     const selectBtn = document.createElement('button');
     selectBtn.id = 'selectEpisodeBtn';
     selectBtn.textContent = '选择剧集';
     selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
+    videoContent.appendChild(selectBtn);
+    selectBtn.addEventListener('click', () => {
+        // Ensure episodes have been loaded
+        if (!currentEpisodes || currentEpisodes.length === 0) {
+            showToast('当前没有可选剧集', 'info');
+            return;
+        }
+        // Populate selectEpisode list
+        selectList.innerHTML = '';
+        currentEpisodes.forEach((ep, idx) => {
+            const btn = document.createElement('button');
+            btn.textContent = ep.name || `Episode ${idx + 1}`;
+            btn.style.cssText = 'font-size:1rem; padding:0.5rem;';
+            btn.addEventListener('click', () => {
+                selectModal.classList.remove('open');
+                playEpisode(idx);
+            });
+            selectList.appendChild(btn);
+        });
+        selectModal.classList.add('open');
+    });
+
+    // Create Watch List Toggle button once (only here)
     const watchListBtn = document.createElement('button');
     watchListBtn.id = 'modalWatchListBtn';
     watchListBtn.textContent = '添加到观看列表';
     watchListBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
+    videoContent.appendChild(watchListBtn);
+    watchListBtn.addEventListener('click', () => {
+        if (!currentVideoId) return;
+        const idx = watchList.indexOf(currentVideoId);
+        if (idx === -1) {
+            watchList.push(currentVideoId);
+            watchListBtn.textContent = '从观看列表移除';
+            showToast('已添加到观看列表', 'info');
+        } else {
+            watchList.splice(idx, 1);
+            watchListBtn.textContent = '添加到观看列表';
+            showToast('已从观看列表移除', 'info');
+        }
+        localStorage.setItem('watchList', JSON.stringify(watchList));
+    });
+
+    // Create Resume button once
     const resumeBtn = document.createElement('button');
     resumeBtn.id = 'resumeEpisodeBtn';
     resumeBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:none;';
-
-    // Insert controls into video player modal
-    const videoContent = videoPlayerModal.querySelector('.video-modal-content');
-    const videoPlayerContainer = videoContent.querySelector('.video-player-container');
-    const videoTitleContainer = videoContent.querySelector('.video-title-container');
-
-    // Insert controls/buttons after videoTitleContainer
-    videoTitleContainer.insertAdjacentElement('afterend', episodeControls);
-    videoContent.insertBefore(ctrlContainer, episodeControls.nextSibling);
-    videoContent.insertBefore(selectBtn, ctrlContainer.nextSibling);
-    videoContent.insertBefore(watchListBtn, selectBtn.nextSibling);
-    videoContent.insertBefore(resumeBtn, watchListBtn.nextSibling);
+    videoContent.appendChild(resumeBtn);
+    resumeBtn.addEventListener('click', () => {
+        if (!currentVideoId || !videoPlayer) return;
+        const epName = currentEpisodes[currentEpisodeIndex].name;
+        const resumeTime = getPlaybackPosition(currentVideoId, epName);
+        if (resumeTime > 1) {
+            // Seek and play
+            videoPlayer.currentTime = resumeTime;
+            videoPlayer.play();
+            showToast(`从${Math.floor(resumeTime / 60)}:${String(Math.floor(resumeTime % 60)).padStart(2, '0')}继续播放`, 'info');
+        }
+    });
 
     // Create Select Episode Modal for elderly-friendly episode selection
     const selectModal = document.createElement('div');
