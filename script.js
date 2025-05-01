@@ -326,8 +326,6 @@ document.addEventListener('DOMContentLoaded', () => {
         let proxyAttempts = 0;
         let success = false;
         let responseData = null;
-        // --- Retry logic ---
-        // If not set, default to all proxies (old behavior)
         const maxTotalTries = maxRetries ? Math.min(maxRetries, corsProxies.length) : corsProxies.length;
         const delayMs = retryDelay || 0;
         while (!success && proxyAttempts < maxTotalTries) {
@@ -376,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (!silent && proxyAttempts % 2 === 0) {
                     showToast(`Switching to alternative connection...`, 'info', 1500);
                 }
-                // Delay before next retry if set
+                // Always delay before next retry if set
                 if (delayMs > 0 && proxyAttempts < maxTotalTries) {
                     await new Promise(r => setTimeout(r, delayMs));
                 }
@@ -689,12 +687,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Using cached video details');
                 } catch (e) {
                     console.error('Error parsing cached data', e);
-                    // If parsing fails, fetch fresh data with retry
-                    data = await fetchData({ ac: 'detail', ids: videoId }, false, 3, 12000);
+                    // If parsing fails, fetch fresh data with retry and silent toasts
+                    data = await fetchData({ ac: 'detail', ids: videoId }, true, 3, 12000);
                 }
             } else {
-                // Fetch fresh data with retry
-                data = await fetchData({ ac: 'detail', ids: videoId }, false, 3, 12000);
+                // Fetch fresh data with retry and silent toasts
+                data = await fetchData({ ac: 'detail', ids: videoId }, true, 3, 12000);
                 if (data && data.list && data.list.length > 0) {
                     try {
                         sessionStorage.setItem(cacheKey, JSON.stringify(data));
