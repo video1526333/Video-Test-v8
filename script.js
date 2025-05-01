@@ -999,6 +999,11 @@ document.addEventListener('DOMContentLoaded', () => {
             hlsPlayer = null; 
         }
         videoPlayer.style.display = 'block';
+        // Clean up Plyr source
+        if (plyrPlayer) {
+            if (typeof plyrPlayer.stop === 'function') plyrPlayer.stop();
+            plyrPlayer.source = { type: 'video', sources: [] };
+        }
 
         // Add error handling and retry logic
         const handleError = (error) => {
@@ -1062,6 +1067,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 hlsPlayer.loadSource(url);
                 hlsPlayer.attachMedia(videoPlayer);
+                // Re-initialize Plyr after HLS attaches
+                if (plyrPlayer) {
+                    plyrPlayer.restart();
+                    plyrPlayer.play();
+                }
                 
                 // Check if media attachment succeeds within 5 seconds
                 const mediaAttachmentTimeout = setTimeout(() => {
@@ -1083,6 +1093,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Native HLS (Safari)
             try {
                 videoPlayer.src = url;
+                if (plyrPlayer) {
+                    plyrPlayer.source = {
+                        type: 'video',
+                        sources: [{ src: url, type: 'application/x-mpegURL' }]
+                    };
+                    plyrPlayer.play();
+                }
                 
                 // Add error listener for Safari
                 videoPlayer.addEventListener('error', function(e) {
@@ -2101,5 +2118,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add this to window object for console access in emergencies
     window.fixScroll = ensureScrollable;
+
+    // Plyr player instance
+    let plyrPlayer = null;
+    // Initialize Plyr after DOMContentLoaded
+    const videoPlayerElem = document.getElementById('videoPlayer');
+    if (window.Plyr && videoPlayerElem) {
+        plyrPlayer = new Plyr(videoPlayerElem, {
+            controls: [
+                'play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'
+            ],
+            settings: ['quality', 'speed'],
+            hideControls: false, // Always show controls
+            tooltips: { controls: true, seek: true },
+            i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
+            disableContextMenu: false
+        });
+        // Make controls always visible
+        if (plyrPlayer.elements && plyrPlayer.elements.controls) {
+            plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+        }
+    }
 
 }); 
