@@ -2157,12 +2157,31 @@ document.addEventListener('DOMContentLoaded', () => {
             plyrPlayer.on('enterfullscreen', () => {
                 const show = alwaysShowCheckbox ? alwaysShowCheckbox.checked : true;
                 if (!show && plyrPlayer.elements.container) {
-                    plyrPlayer.elements.container.classList.add('hide-controls');
+                    const container = plyrPlayer.elements.container;
+                    container.classList.add('hide-controls');
+                    // Add exit fullscreen overlay button
+                    if (!document.getElementById('exitFullscreenBtn')) {
+                        const exitBtn = document.createElement('button');
+                        exitBtn.id = 'exitFullscreenBtn';
+                        exitBtn.className = 'exit-fullscreen-btn';
+                        exitBtn.textContent = '退出';
+                        exitBtn.addEventListener('click', () => {
+                            if (plyrPlayer.fullscreen && plyrPlayer.fullscreen.exit) {
+                                plyrPlayer.fullscreen.exit();
+                            } else if (document.exitFullscreen) {
+                                document.exitFullscreen();
+                            }
+                        });
+                        container.appendChild(exitBtn);
+                    }
                 }
             });
             plyrPlayer.on('exitfullscreen', () => {
-                if (plyrPlayer.elements.container) {
-                    plyrPlayer.elements.container.classList.remove('hide-controls');
+                const container = plyrPlayer.elements.container;
+                if (container) {
+                    container.classList.remove('hide-controls');
+                    const exitBtn = document.getElementById('exitFullscreenBtn');
+                    if (exitBtn) exitBtn.remove();
                 }
             });
         }
