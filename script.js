@@ -757,71 +757,45 @@ document.addEventListener('DOMContentLoaded', () => {
                     return { name: parts[0] || '', url: parts[1] || '' };
                 });
                 currentEpisodeIndex = 0;
-                
-                // Use batch processing for better performance with many episodes
-                const batchSize = 20;
-                for (let i = 0; i < playSources.length; i += batchSize) {
-                    const batch = playSources.slice(i, i + batchSize);
-                    
-                    // Process this batch
-                    batch.forEach(source => {
-                        const parts = source.split('$');
-                        if (parts.length === 2) {
-                            const name = parts[0];
-                            const url = parts[1];
 
-                            // Check if it's an m3u8 URL
-                            if (url && url.startsWith('http')) {
-                                const isM3u8 = url.includes('.m3u8');
-                                const link = document.createElement('a');
-                                link.href = 'javascript:void(0)'; // Use JavaScript instead of direct link
-                                link.textContent = name || '播放';
-                                link.dataset.url = url;
-                                link.dataset.name = name || 'Episode';
-                                // --- Add watched class if already watched ---
-                                if (isEpisodeWatched(videoId, name)) {
-                                    link.classList.add('watched');
-                                } else {
-                                    link.classList.remove('watched');
-                                }
-                                // If this is an m3u8 link, set up the event handler
-                                if (isM3u8) {
-                                    link.addEventListener('click', function (e) {
-                                        e.preventDefault();
-                                        playM3u8Video(url, this);
-                                    });
-                                } else {
-                                    // For non-m3u8 links, we'll still open in a new tab
-                                    link.target = '_blank';
-                                    link.href = url;
-                                }
-
-                                fragment.appendChild(link);
+                // --- FIX: Remove batching/recursion, just process all at once ---
+                playSources.forEach(source => {
+                    const parts = source.split('$');
+                    if (parts.length === 2) {
+                        const name = parts[0];
+                        const url = parts[1];
+                        if (url && url.startsWith('http')) {
+                            const isM3u8 = url.includes('.m3u8');
+                            const link = document.createElement('a');
+                            link.href = 'javascript:void(0)';
+                            link.textContent = name || '播放';
+                            link.dataset.url = url;
+                            link.dataset.name = name || 'Episode';
+                            if (isEpisodeWatched(videoId, name)) {
+                                link.classList.add('watched');
                             } else {
-                                console.warn(`Invalid episode URL found: ${url}`);
+                                link.classList.remove('watched');
                             }
+                            if (isM3u8) {
+                                link.addEventListener('click', function (e) {
+                                    e.preventDefault();
+                                    playM3u8Video(url, this);
+                                });
+                            } else {
+                                link.target = '_blank';
+                                link.href = url;
+                            }
+                            fragment.appendChild(link);
+                        } else {
+                            console.warn(`Invalid episode URL found: ${url}`);
                         }
-                    });
-                    
-                    // If we have more batches, use setTimeout to avoid blocking the main thread
-                    if (i + batchSize < playSources.length) {
-                        // This will be a synchronous operation since we're using a document fragment
-                        modalEpisodes.appendChild(fragment);
-                        
-                        // Return a promise to properly handle async batching
-                        return new Promise(resolve => {
-                            setTimeout(() => {
-                                showVideoDetails(videoId).then(resolve);
-                            }, 0);
-                        });
                     }
-                }
+                });
             } else {
                 const noEpisodes = document.createElement('div');
                 noEpisodes.textContent = 'No playback sources available.';
                 fragment.appendChild(noEpisodes);
             }
-            
             // Append all episodes at once
             modalEpisodes.appendChild(fragment);
 
