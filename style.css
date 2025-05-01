@@ -1504,7 +1504,9 @@ button:hover,
   color: #005fa3 !important;
   border-color: #005fa3 !important;
 }
-
+.plyr--video .plyr__controls{
+  padding-top: 0px !important;
+}
 .plyr__control--overlaid svg{
   left: 8px !important;
 }
