@@ -1492,9 +1492,3 @@ button:hover,
   visibility: visible !important;
   pointer-events: auto !important;
 }
-
-/* Show only current time in Plyr controls */
-.plyr__time--duration,
-.plyr__time--remaining {
-  display: none !important;
-}

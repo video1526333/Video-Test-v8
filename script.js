@@ -2111,7 +2111,8 @@ document.addEventListener('DOMContentLoaded', () => {
             hideControls: false, // Always show controls
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
-            disableContextMenu: false
+            disableContextMenu: false,
+            invertTime: false // Show current/total time instead of remaining time
         });
         // Make controls always visible
         if (plyrPlayer.elements && plyrPlayer.elements.controls) {
