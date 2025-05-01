@@ -1897,34 +1897,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     // Insert controls into video player modal
     const videoContent = videoPlayerModal.querySelector('.video-modal-content');
-    videoContent.appendChild(episodeControls);
-    videoContent.appendChild(ctrlContainer);
-    // Insert Select Episode button right below prev/next controls
-    const selectBtn = document.createElement('button');
-    selectBtn.id = 'selectEpisodeBtn';
-    selectBtn.textContent = '选择剧集';
-    selectBtn.style.cssText = 'font-size:1.2rem; padding:0.5rem 1rem; margin:0.5rem auto; display:block;';
-    videoContent.appendChild(selectBtn);
-    selectBtn.addEventListener('click', () => {
-        // Ensure episodes have been loaded
-        if (!currentEpisodes || currentEpisodes.length === 0) {
-            showToast('当前没有可选剧集', 'info');
-            return;
-        }
-        // Populate selectEpisode list
-        selectList.innerHTML = '';
-        currentEpisodes.forEach((ep, idx) => {
-            const btn = document.createElement('button');
-            btn.textContent = ep.name || `Episode ${idx + 1}`;
-            btn.style.cssText = 'font-size:1rem; padding:0.5rem;';
-            btn.addEventListener('click', () => {
-                selectModal.classList.remove('open');
-                playEpisode(idx);
-            });
-            selectList.appendChild(btn);
-        });
-        selectModal.classList.add('open');
-    });
+    const videoPlayerContainer = videoContent.querySelector('.video-player-container');
+    const videoTitleContainer = videoContent.querySelector('.video-title-container');
+
+    // Insert controls/buttons after videoTitleContainer
+    videoTitleContainer.insertAdjacentElement('afterend', episodeControls);
+    videoContent.insertBefore(ctrlContainer, episodeControls.nextSibling);
+    videoContent.insertBefore(selectBtn, ctrlContainer.nextSibling);
+    videoContent.insertBefore(watchListBtn, selectBtn.nextSibling);
+    videoContent.insertBefore(resumeBtn, watchListBtn.nextSibling);
 
     // Create Watch List Toggle button once (only here)
     const watchListBtn = document.createElement('button');
