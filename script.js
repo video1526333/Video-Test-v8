@@ -314,28 +314,24 @@ document.addEventListener('DOMContentLoaded', () => {
         isLoading = false;
     }
 
-    async function fetchData(params, silent = false) {
+    // Update fetchData to accept maxRetries and retryDelay
+    async function fetchData(params, silent = false, maxRetries = null, retryDelay = null) {
         if (!silent) showLoading();
-        
-        // Add a timeout to prevent hanging on API requests
         const FETCH_TIMEOUT = 10000; // 10 seconds
-        
-        // Build raw target URL with unencoded params (so searchTerm remains raw for proxy encoding)
         const rawQuery = Object.entries(params)
             .map(([key, val]) => `${key}=${val}`)
             .join('&');
         const targetUrlRaw = `${apiUrl}?${rawQuery}`;
-
-        // Track original proxy index to avoid infinite loop
         const originalProxyIndex = currentProxyIndex;
         let proxyAttempts = 0;
         let success = false;
         let responseData = null;
-
-        // Try up to all available proxies (including direct fetch if proxy is empty string)
-        while (!success && proxyAttempts < corsProxies.length) {
+        // --- Retry logic ---
+        // If not set, default to all proxies (old behavior)
+        const maxTotalTries = maxRetries ? Math.min(maxRetries, corsProxies.length) : corsProxies.length;
+        const delayMs = retryDelay || 0;
+        while (!success && proxyAttempts < maxTotalTries) {
             const prefix = corsProxies[currentProxyIndex];
-            // Build fetch URL: encode only the base URL (up to '?'), leave the query string intact
             let fetchUrl;
             if (prefix) {
                 const [basePart, queryPart] = targetUrlRaw.split('?');
@@ -343,65 +339,51 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 fetchUrl = targetUrlRaw;
             }
-
             try {
                 console.log(`Fetching via CORS proxy ${currentProxyIndex + 1}: ${fetchUrl}`);
                 console.log('Request params:', params);
-
-                // Create an AbortController for timeout
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
                 const response = await fetch(fetchUrl, {
                     signal: controller.signal,
                     mode: 'cors',
-                    cache: 'no-cache' // Don't cache API responses to avoid stale data
+                    cache: 'no-cache'
                 }).finally(() => {
                     clearTimeout(timeoutId);
                 });
-
-                // Handle HTTP error status (including 404)
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-
                 const data = await response.json();
-
-                // Check for valid API response
                 if (data.code !== 1) {
                     console.error('API Error:', data.msg);
                     throw new Error(`API Error: ${data.msg}`);
                 }
-
-                // Success! We have valid data
                 success = true;
                 responseData = data;
                 console.log('API Response:', data);
-
             } catch (error) {
-                // Handle timeout separately
                 if (error.name === 'AbortError') {
                     console.error(`Fetch timeout with proxy ${currentProxyIndex + 1}`);
-                    showToast('Request timed out. Trying another connection...', 'info', 1500);
+                    if (!silent) showToast('Request timed out. Trying another connection...', 'info', 1500);
                 } else {
                     console.error(`Fetch Error with proxy ${currentProxyIndex + 1}:`, error);
                 }
-
-                // Move to the next proxy
                 currentProxyIndex = (currentProxyIndex + 1) % corsProxies.length;
                 proxyAttempts++;
-
-                // Show toast only on the last attempt
-                if (proxyAttempts >= corsProxies.length) {
-                    showToast(`Failed to fetch data: ${error.message}`, 'error');
-                } else if (proxyAttempts % 2 === 0) { // Only show every other attempt to avoid spamming
+                if (proxyAttempts >= maxTotalTries) {
+                    if (!silent) showToast(`Failed to fetch data: ${error.message}`, 'error');
+                } else if (!silent && proxyAttempts % 2 === 0) {
                     showToast(`Switching to alternative connection...`, 'info', 1500);
+                }
+                // Delay before next retry if set
+                if (delayMs > 0 && proxyAttempts < maxTotalTries) {
+                    await new Promise(r => setTimeout(r, delayMs));
                 }
             }
         }
-
         if (!silent) hideLoading();
-        return responseData; // Will be null if all proxies failed
+        return responseData;
     }
 
     // --- Core Functions ---
@@ -693,16 +675,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Update showVideoDetails to use maxRetries and retryDelay for video detail fetches
     async function showVideoDetails(videoId) {
-        // Add loading indicator specific to video details
+        // Add loading indicator specific to video details (only once)
         showToast('Loading video details...', 'info', 2000);
-        
-        // Use a more efficient fetch with caching for video details
         const cacheKey = `video_details_${videoId}`;
         let data;
-        
         try {
-            // Check if we have this data in sessionStorage
             const cachedData = sessionStorage.getItem(cacheKey);
             if (cachedData) {
                 try {
@@ -710,13 +689,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('Using cached video details');
                 } catch (e) {
                     console.error('Error parsing cached data', e);
-                    // If parsing fails, fetch fresh data
-                    data = await fetchData({ ac: 'detail', ids: videoId });
+                    // If parsing fails, fetch fresh data with retry
+                    data = await fetchData({ ac: 'detail', ids: videoId }, false, 3, 12000);
                 }
             } else {
-                // Fetch fresh data
-                data = await fetchData({ ac: 'detail', ids: videoId });
-                // Cache the response
+                // Fetch fresh data with retry
+                data = await fetchData({ ac: 'detail', ids: videoId }, false, 3, 12000);
                 if (data && data.list && data.list.length > 0) {
                     try {
                         sessionStorage.setItem(cacheKey, JSON.stringify(data));
@@ -725,12 +703,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
-            
             if (!data || !data.list || data.list.length === 0) {
                 showToast('Failed to load video details.', 'error');
-                return false; // Signal failure to load video
+                return false;
             }
-
             const video = data.list[0]; // Assuming the first item is the one we want
 
             // Store the current video ID for sharing
