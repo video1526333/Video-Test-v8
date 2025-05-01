@@ -1493,7 +1493,8 @@ button:hover,
   pointer-events: auto !important;
 }
 
-/* Hide Plyr remaining time display */
+/* Show only current time in Plyr controls */
+.plyr__time--duration,
 .plyr__time--remaining {
   display: none !important;
 }
