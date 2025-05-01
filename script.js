@@ -1359,37 +1359,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const videoId = card.dataset.id;
         currentVideoId = videoId;
         (async () => {
-            try {
-                const data = await fetchData({ ac: 'detail', ids: videoId });
-                if (!data || !data.list || data.list.length === 0) {
-                    showToast('Failed to load video details.', 'error');
-                    return;
+            const MAX_RETRIES = 3;
+            let attempt = 0;
+            let success = false;
+            showLoaderOverlay();
+            while (attempt < MAX_RETRIES && !success) {
+                try {
+                    const data = await fetchData({ ac: 'detail', ids: videoId });
+                    if (!data || !data.list || data.list.length === 0) {
+                        attempt++;
+                        if (attempt < MAX_RETRIES) {
+                            showToast(`加载失败，正在重试... (${attempt}/${MAX_RETRIES})`, 'error');
+                        } else {
+                            showToast('Failed to load video details after 3 attempts.', 'error');
+                        }
+                        continue;
+                    }
+                    // Parse episodes
+                    currentEpisodes = data.list[0].vod_play_url.split('#')
+                        .map(src => { const [name, url] = src.split('$'); return { name: name || 'Episode', url }; });
+                    if (currentEpisodes.length === 0) {
+                        showToast('No episodes available.', 'info');
+                        hideLoaderOverlay();
+                        return;
+                    }
+                    // Update watch list button text
+                    watchListBtn.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
+                    // Play default episode: resume at last watched if available
+                    const watchedMap = getWatchedEpisodes();
+                    const epNames = watchedMap[videoId] || [];
+                    const lastEp = epNames[epNames.length - 1];
+                    let startIdx = 0;
+                    if (lastEp) {
+                        const found = currentEpisodes.findIndex(ep => ep.name === lastEp);
+                        if (found >= 0) startIdx = found;
+                    }
+                    playEpisode(startIdx);
+                    videoPlayerModal.classList.add('open');
+                    updateBodyScrollLock();
+                    success = true;
+                } catch (err) {
+                    attempt++;
+                    console.error(err);
+                    if (attempt < MAX_RETRIES) {
+                        showToast(`加载失败，正在重试... (${attempt}/${MAX_RETRIES})`, 'error');
+                    } else {
+                        showToast('Error loading video after 3 attempts.', 'error');
+                    }
                 }
-                // Parse episodes
-                currentEpisodes = data.list[0].vod_play_url.split('#')
-                    .map(src => { const [name, url] = src.split('$'); return { name: name || 'Episode', url }; });
-                if (currentEpisodes.length === 0) {
-                    showToast('No episodes available.', 'info');
-                    return;
-                }
-                // Update watch list button text
-                watchListBtn.textContent = watchList.includes(currentVideoId) ? '从观看列表移除' : '添加到观看列表';
-                // Play default episode: resume at last watched if available
-                const watchedMap = getWatchedEpisodes();
-                const epNames = watchedMap[videoId] || [];
-                const lastEp = epNames[epNames.length - 1];
-                let startIdx = 0;
-                if (lastEp) {
-                    const found = currentEpisodes.findIndex(ep => ep.name === lastEp);
-                    if (found >= 0) startIdx = found;
-                }
-                playEpisode(startIdx);
-                videoPlayerModal.classList.add('open');
-                updateBodyScrollLock();
-            } catch (err) {
-                console.error(err);
-                showToast('Error loading video.', 'error');
             }
+            hideLoaderOverlay();
         })();
     });
 
