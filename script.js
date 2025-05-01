@@ -1070,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Re-initialize Plyr after HLS attaches
                 if (plyrPlayer) {
                     plyrPlayer.restart();
-                    plyrPlayer.play();
+                    plyrPlayer.play(); // Ensure autoplay
                 }
                 
                 // Check if media attachment succeeds within 5 seconds
@@ -1098,7 +1098,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         type: 'video',
                         sources: [{ src: url, type: 'application/x-mpegURL' }]
                     };
-                    plyrPlayer.play();
+                    plyrPlayer.play(); // Ensure autoplay
                 }
                 
                 // Add error listener for Safari
@@ -2126,7 +2126,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
-                'play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'settings', 'fullscreen'
+                'play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
             hideControls: false, // Always show controls
