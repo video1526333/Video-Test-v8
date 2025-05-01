@@ -510,6 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function loadVideos(page = 1, categoryId = '', searchTerm = '', append = false) {
+        isWatchListMode = false; // Not in watch list mode when loading normal videos
         if (isLoading || (!append && page > 1 && !hasMoreContent)) return;
 
         currentPage = page;
@@ -672,6 +673,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Check if user scrolled near bottom
     function checkScroll() {
+        if (isWatchListMode) return; // Disable infinite scroll in watch list mode
         if (isLoading || !hasMoreContent) return;
 
         const scrollPosition = window.innerHeight + window.scrollY;
@@ -1813,6 +1815,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Watch List Functions ---
     async function loadWatchList() {
+        isWatchListMode = true; // Set watch list mode
         // Render saved videos from watchList
         videoGrid.innerHTML = '';
         if (watchList.length === 0) {
