@@ -2062,6 +2062,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Wake Lock support for iOS: keep screen awake during playback
     const noSleep = new NoSleep();
+    // Add a one-time listener to enable wake lock on first user touch
+    document.addEventListener('touchstart', e => {
+      e.preventDefault();
+      noSleep.enable();
+      console.log('Wake Lock enabled (first user touch)');
+    }, { once: true, passive: false });
 
     // Static nav items for Settings and Watch History
     const settingsNav = document.getElementById('settingsNav');
