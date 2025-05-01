@@ -2156,7 +2156,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'play-large', 'play', 'progress', 'current-time', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
-            hideControls: false, // Always show controls
+            // hideControls: false, // Always show controls
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
             disableContextMenu: false,

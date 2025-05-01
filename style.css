@@ -1472,11 +1472,11 @@ button:hover,
 .plyr__controls .plyr__time {
   font-size: 2rem !important;
 }
-.plyr__controls--always-visible,
-.plyr__controls {
+.plyr__controls--always-visible {
   opacity: 1 !important;
   visibility: visible !important;
   transition: none !important;
+  pointer-events: auto !important;
 }
 .plyr__controls:after {
   display: none !important;
