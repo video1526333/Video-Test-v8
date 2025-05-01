@@ -951,6 +951,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to play m3u8 videos
     function playM3u8Video(url, linkElement, retryCount = 0) {
+        // Ensure wake lock active when playback starts
+        acquireWakeLock();
         const MAX_RETRIES = 3;
         showLoaderOverlay();
         // Add a global loading timeout to prevent hanging
@@ -1258,7 +1260,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('[Resume Debug] Saving playback position (pause):', videoPlayer.currentTime);
                 }
             }
-            noSleep.disable();
+            releaseWakeLock();
             console.log('Wake Lock disabled');
         };
         // Save position when modal closes (if applicable)
@@ -1467,8 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             url.searchParams.delete('video');
             window.history.pushState({}, 'Video Portal', url);
         }
-        // disable wake lock
-        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        releaseWakeLock();
         
         // Extra check to make sure scroll is restored
         document.body.style.overflow = '';
@@ -1498,8 +1499,7 @@ document.addEventListener('DOMContentLoaded', () => {
         videoPlayer.removeAttribute('src');
         videoPlayer.load();
         
-        // disable wake lock
-        try { noSleep.disable(); console.log('Wake Lock disabled'); } catch(e) {}
+        releaseWakeLock();
         hideLoaderOverlay();
     });
 
@@ -2060,14 +2060,47 @@ document.addEventListener('DOMContentLoaded', () => {
         playM3u8Video(ep.url, dummyLink);
     }
 
-    // Wake Lock support for iOS: keep screen awake during playback
+    // Wake Lock support: Screen Wake Lock API if available, else fallback to NoSleep.js
     const noSleep = new NoSleep();
-    // Add a one-time listener to enable wake lock on first user touch
-    document.addEventListener('touchstart', e => {
-      e.preventDefault();
-      noSleep.enable();
-      console.log('Wake Lock enabled (first user touch)');
-    }, { once: true, passive: false });
+    let wakeLockSentinel = null;
+    async function acquireWakeLock() {
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockSentinel.addEventListener('release', () => console.log('Wake Lock released'));
+          console.log('Wake Lock acquired (Screen Wake Lock API)');
+        } else {
+          noSleep.enable();
+          console.log('Wake Lock enabled (NoSleep.js)');
+        }
+      } catch (err) {
+        console.error('Could not acquire wake lock:', err);
+      }
+    }
+    async function releaseWakeLock() {
+      try {
+        if (wakeLockSentinel) {
+          await wakeLockSentinel.release();
+          wakeLockSentinel = null;
+          console.log('Wake Lock released (Screen Wake Lock API)');
+        } else {
+          noSleep.disable();
+          console.log('Wake Lock disabled (NoSleep.js)');
+        }
+      } catch (err) {
+        console.error('Could not release wake lock:', err);
+      }
+    }
+    // Acquire wake lock on first user gesture
+    ['click', 'touchstart', 'pointerdown'].forEach(evt => {
+      document.addEventListener(evt, acquireWakeLock, { once: true, capture: true });
+    });
+    // Re-acquire wake lock if the page becomes visible again
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && wakeLockSentinel) {
+        acquireWakeLock();
+      }
+    });
 
     // Static nav items for Settings and Watch History
     const settingsNav = document.getElementById('settingsNav');
@@ -2117,12 +2150,7 @@ document.addEventListener('DOMContentLoaded', () => {
             videoPlayer.load();
         }
         
-        // Reset wake lock
-        try { 
-            noSleep.disable(); 
-        } catch(e) {
-            console.error('Error disabling wake lock:', e);
-        }
+        releaseWakeLock();
         
         showToast('Page reset - scrolling restored', 'info', 2000);
     }
