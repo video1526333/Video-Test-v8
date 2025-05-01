@@ -122,8 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('passwordInput');
     const submitPasswordButton = document.getElementById('submitPassword');
     const passwordMessage = document.getElementById('passwordMessage');
-    // Video controls always visible setting
-    const alwaysShowControlsCheckbox = document.getElementById('alwaysShowControlsCheckbox');
 
     // Share elements
     const shareButton = document.getElementById('shareButton');
@@ -2128,64 +2126,46 @@ document.addEventListener('DOMContentLoaded', () => {
     let plyrPlayer = null;
     // Initialize Plyr after DOMContentLoaded
     const videoPlayerElem = document.getElementById('videoPlayer');
-    // Helper: get setting from localStorage (default true)
-    function getAlwaysShowControlsSetting() {
-      const val = localStorage.getItem('alwaysShowControls');
-      return val === null ? true : val === 'true';
-    }
-    // Helper: set setting in localStorage
-    function setAlwaysShowControlsSetting(val) {
-      localStorage.setItem('alwaysShowControls', val ? 'true' : 'false');
-    }
-    // Helper: update Plyr controls visibility
-    function updatePlyrControlsVisibility() {
-      if (!plyrPlayer || !plyrPlayer.elements || !plyrPlayer.elements.controls) return;
-      const controls = plyrPlayer.elements.controls;
-      const alwaysShow = getAlwaysShowControlsSetting();
-      const isFullscreen = document.fullscreenElement === videoPlayerModal || document.fullscreenElement === videoPlayerElem;
-      if (alwaysShow || !isFullscreen) {
-        controls.classList.add('plyr-controls--always-visible');
-      } else {
-        controls.classList.remove('plyr-controls--always-visible');
-      }
-    }
-
     if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
                 'play-large', 'play', 'progress', 'current-time', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
-            // hideControls: false, // Always show controls
+            hideControls: false, // Always show controls
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
             disableContextMenu: false,
             invertTime: false // Show current/total time instead of remaining time
         });
-        // Set controls visibility based on setting
-        updatePlyrControlsVisibility();
-        // Listen for fullscreen changes
-        document.addEventListener('fullscreenchange', updatePlyrControlsVisibility);
-        // Also update on modal open/close
-        videoPlayerModal.addEventListener('classChange', updatePlyrControlsVisibility);
-    }
-
-    // On DOMContentLoaded, set checkbox state from localStorage
-    if (alwaysShowControlsCheckbox) {
-      alwaysShowControlsCheckbox.checked = getAlwaysShowControlsSetting();
-      alwaysShowControlsCheckbox.addEventListener('change', function() {
-        setAlwaysShowControlsSetting(this.checked);
-        updatePlyrControlsVisibility();
-      });
-    }
-    // Also update controls when video modal is opened/closed
-    function triggerClassChangeEvent(el) {
-      const evt = new Event('classChange');
-      el.dispatchEvent(evt);
-    }
-    if (videoPlayerModal) {
-      const observer = new MutationObserver(() => triggerClassChangeEvent(videoPlayerModal));
-      observer.observe(videoPlayerModal, { attributes: true, attributeFilter: ['class'] });
+        // Make controls always visible
+        if (plyrPlayer.elements && plyrPlayer.elements.controls) {
+            plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+        }
+        // Preference: Always show controls checkbox in settings
+        const alwaysShowCheckbox = document.getElementById('alwaysShowControlsCheckbox');
+        const storedPref = localStorage.getItem('alwaysShowControls');
+        const alwaysShowPref = storedPref === null ? true : JSON.parse(storedPref);
+        if (alwaysShowCheckbox) {
+            alwaysShowCheckbox.checked = alwaysShowPref;
+            alwaysShowCheckbox.addEventListener('change', () => {
+                localStorage.setItem('alwaysShowControls', JSON.stringify(alwaysShowCheckbox.checked));
+            });
+        }
+        // Toggle hiding controls on fullscreen based on preference
+        if (plyrPlayer && plyrPlayer.on) {
+            plyrPlayer.on('enterfullscreen', () => {
+                const show = alwaysShowCheckbox ? alwaysShowCheckbox.checked : true;
+                if (!show && plyrPlayer.elements.container) {
+                    plyrPlayer.elements.container.classList.add('hide-controls');
+                }
+            });
+            plyrPlayer.on('exitfullscreen', () => {
+                if (plyrPlayer.elements.container) {
+                    plyrPlayer.elements.container.classList.remove('hide-controls');
+                }
+            });
+        }
     }
 
     // Loader and Error Overlay logic for elderly users

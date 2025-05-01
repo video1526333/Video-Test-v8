@@ -1472,11 +1472,11 @@ button:hover,
 .plyr__controls .plyr__time {
   font-size: 2rem !important;
 }
-.plyr__controls--always-visible {
+.plyr__controls--always-visible,
+.plyr__controls {
   opacity: 1 !important;
   visibility: visible !important;
   transition: none !important;
-  pointer-events: auto !important;
 }
 .plyr__controls:after {
   display: none !important;
@@ -1590,4 +1590,9 @@ button:hover,
 }
 #errorOverlay button:active {
   background: #7a4fcf !important;
+}
+
+/* Hide Plyr controls when hide-controls class is added (e.g., in fullscreen when user opts out) */
+.hide-controls .plyr__controls {
+  display: none !important;
 }

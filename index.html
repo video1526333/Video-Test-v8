@@ -121,17 +121,15 @@
                 <button id="submitPassword">提交</button>
                 <p id="passwordMessage"></p>
 
-                <!-- Video controls always visible setting -->
-                <div style="margin: 0.5rem 0;">
-                  <input type="checkbox" id="alwaysShowControlsCheckbox" checked>
-                  <label for="alwaysShowControlsCheckbox" style="font-weight:normal;">总是显示视频控制栏（适合长辈）</label>
-                </div>
-
                 <!-- Export/Import All User Data -->
                 <div class="userdata-import-export" style="margin-top:1rem;">
                     <button id="exportAllUserDataButton">导出全部数据 (.json)</button>
                     <input type="file" id="importAllUserDataInput" accept=".json" style="display:none;">
                     <button id="importAllUserDataButton">导入全部数据 (.json)</button>
+                </div>
+                <div class="control-settings-option" style="margin-top:1rem;">
+                    <input type="checkbox" id="alwaysShowControlsCheckbox">
+                    <label for="alwaysShowControlsCheckbox">在全屏模式下始终显示视频控制面板</label>
                 </div>
             </div>
         </div>
