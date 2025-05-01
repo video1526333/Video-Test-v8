@@ -2167,6 +2167,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let plyrPlayer = null;
     // Initialize Plyr after DOMContentLoaded
     const videoPlayerElem = document.getElementById('videoPlayer');
+    // Detect iOS devices (including iPadOS) and enable native inline fullscreen
+    if ((/iPad|iPhone|iPod/.test(navigator.userAgent)) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
+        videoPlayerElem.setAttribute('playsinline', '');
+        videoPlayerElem.setAttribute('webkit-playsinline', '');
+    }
     if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
@@ -2177,7 +2182,12 @@ document.addEventListener('DOMContentLoaded', () => {
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
             disableContextMenu: false,
-            invertTime: false // Show current/total time instead of remaining time
+            invertTime: false, // Show current/total time instead of remaining time
+            fullscreen: {
+                enabled: true,
+                fallback: true,
+                iosNative: true
+            }
         });
         // Make controls always visible
         if (plyrPlayer.elements && plyrPlayer.elements.controls) {
