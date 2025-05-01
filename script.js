@@ -122,8 +122,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const passwordInput = document.getElementById('passwordInput');
     const submitPasswordButton = document.getElementById('submitPassword');
     const passwordMessage = document.getElementById('passwordMessage');
-    // Plyr controls always visible checkbox
+
+    // --- Plyr Controls Visibility Setting ---
     const alwaysShowControlsCheckbox = document.getElementById('alwaysShowControlsCheckbox');
+    const PLYR_CONTROLS_KEY = 'alwaysShowPlyrControls';
+    // Helper to get setting (default true)
+    function getAlwaysShowControlsSetting() {
+      const val = localStorage.getItem(PLYR_CONTROLS_KEY);
+      return val === null ? true : val === 'true';
+    }
+    // Helper to apply setting to Plyr controls
+    function applyPlyrControlsVisibility() {
+      if (plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
+        if (getAlwaysShowControlsSetting()) {
+          plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+        } else {
+          plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
+        }
+      }
+    }
+    // On checkbox change, update setting and controls
+    if (alwaysShowControlsCheckbox) {
+      alwaysShowControlsCheckbox.checked = getAlwaysShowControlsSetting();
+      alwaysShowControlsCheckbox.addEventListener('change', function() {
+        localStorage.setItem(PLYR_CONTROLS_KEY, this.checked);
+        applyPlyrControlsVisibility();
+      });
+    }
 
     // Share elements
     const shareButton = document.getElementById('shareButton');
@@ -2126,89 +2151,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Plyr player instance
     let plyrPlayer = null;
+    // Initialize Plyr after DOMContentLoaded
     const videoPlayerElem = document.getElementById('videoPlayer');
-    // Function to (re)initialize Plyr with correct hideControls value
-    function initPlyrPlayer() {
-        if (!window.Plyr || !videoPlayerElem) return;
-        // --- Preserve video state ---
-        let prevSrc = videoPlayerElem.currentSrc || videoPlayerElem.src;
-        let prevTime = videoPlayerElem.currentTime || 0;
-        let wasPlaying = !videoPlayerElem.paused && !videoPlayerElem.ended;
-        // If using HLS.js, destroy it first
-        if (window.hlsPlayer && typeof window.hlsPlayer.destroy === 'function') {
-            try { window.hlsPlayer.destroy(); } catch (e) {}
-            window.hlsPlayer = null;
-        }
-        // Destroy previous Plyr instance if exists
-        if (plyrPlayer && typeof plyrPlayer.destroy === 'function') {
-            plyrPlayer.destroy();
-        }
-        // Remove all sources from video element to avoid Plyr bugs
-        videoPlayerElem.removeAttribute('src');
-        while (videoPlayerElem.firstChild) videoPlayerElem.removeChild(videoPlayerElem.firstChild);
-        videoPlayerElem.load();
-        // Get setting from localStorage (default true)
-        const alwaysShow = localStorage.getItem('alwaysShowControls');
-        const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
+    if (window.Plyr && videoPlayerElem) {
         plyrPlayer = new Plyr(videoPlayerElem, {
             controls: [
                 'play-large', 'play', 'progress', 'current-time', 'fullscreen'
             ],
             settings: ['quality', 'speed'],
-            hideControls: !alwaysShowBool, // true = auto-hide, false = always show
+            hideControls: false, // Always show controls
             tooltips: { controls: true, seek: true },
             i18n: { play: '播放', pause: '暂停', volume: '音量', fullscreen: '全屏' },
             disableContextMenu: false,
-            invertTime: false
+            invertTime: false // Show current/total time instead of remaining time
         });
-        // Update controls class for extra robustness
-        if (plyrPlayer.elements && plyrPlayer.elements.controls) {
-            if (alwaysShowBool) {
-                plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
+        // Apply controls visibility based on setting
+        applyPlyrControlsVisibility();
+        // Listen for fullscreen changes to auto-hide controls if needed
+        function handleFullscreenChange() {
+          if (!getAlwaysShowControlsSetting() && plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+            if (isFullscreen) {
+              plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
             } else {
-                plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
+              plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
             }
+          } else {
+            applyPlyrControlsVisibility();
+          }
         }
-        // Listen for Plyr fullscreen events
-        if (plyrPlayer && plyrPlayer.on) {
-            plyrPlayer.on('enterfullscreen', () => {
-                const alwaysShow = localStorage.getItem('alwaysShowControls');
-                const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
-                if (!alwaysShowBool && plyrPlayer.elements && plyrPlayer.elements.controls) {
-                    plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
-                }
-            });
-            plyrPlayer.on('exitfullscreen', () => {
-                const alwaysShow = localStorage.getItem('alwaysShowControls');
-                const alwaysShowBool = alwaysShow === null ? true : alwaysShow === 'true';
-                if (alwaysShowBool && plyrPlayer.elements && plyrPlayer.elements.controls) {
-                    plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-                }
-            });
-        }
-        // --- Restore video state ---
-        if (prevSrc) {
-            videoPlayerElem.src = prevSrc;
-            videoPlayerElem.load();
-            videoPlayerElem.currentTime = prevTime;
-            if (wasPlaying) {
-                videoPlayerElem.play().catch(()=>{});
-            }
-        }
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     }
-
-    // Set checkbox state from localStorage (default true) and wire up event
-    if (alwaysShowControlsCheckbox) {
-        const stored = localStorage.getItem('alwaysShowControls');
-        alwaysShowControlsCheckbox.checked = stored === null ? true : stored === 'true';
-        alwaysShowControlsCheckbox.addEventListener('change', function() {
-            localStorage.setItem('alwaysShowControls', this.checked ? 'true' : 'false');
-            initPlyrPlayer();
-        });
-    }
-
-    // Initialize Plyr on page load
-    initPlyrPlayer();
 
     // Loader and Error Overlay logic for elderly users
     const loaderOverlay = document.getElementById('loaderOverlay');
