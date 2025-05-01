@@ -59,6 +59,13 @@ function isEpisodeWatched(videoId, episodeName) {
 
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Wake Lock: NoSleep.js – enable on first user click
+    const noSleep = new NoSleep();
+    document.addEventListener('click', function enableNoSleep() {
+        noSleep.enable();
+        console.log('Wake Lock enabled');
+    }, { once: true });
+
     // --- Watch History Modal Logic ---
     const watchHistoryButton = document.getElementById('watchHistoryButton');
     const watchHistoryModal = document.getElementById('watchHistoryModal');
@@ -1260,7 +1267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.log('[Resume Debug] Saving playback position (pause):', videoPlayer.currentTime);
                 }
             }
-            releaseWakeLock();
+            noSleep.disable();
             console.log('Wake Lock disabled');
         };
         // Save position when modal closes (if applicable)
@@ -1469,7 +1476,8 @@ document.addEventListener('DOMContentLoaded', () => {
             url.searchParams.delete('video');
             window.history.pushState({}, 'Video Portal', url);
         }
-        releaseWakeLock();
+        noSleep.disable();
+        console.log('Wake Lock disabled');
         
         // Extra check to make sure scroll is restored
         document.body.style.overflow = '';
@@ -1499,7 +1507,8 @@ document.addEventListener('DOMContentLoaded', () => {
         videoPlayer.removeAttribute('src');
         videoPlayer.load();
         
-        releaseWakeLock();
+        noSleep.disable();
+        console.log('Wake Lock disabled');
         hideLoaderOverlay();
     });
 
@@ -2061,46 +2070,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Wake Lock support: Screen Wake Lock API if available, else fallback to NoSleep.js
-    const noSleep = new NoSleep();
-    let wakeLockSentinel = null;
-    async function acquireWakeLock() {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLockSentinel = await navigator.wakeLock.request('screen');
-          wakeLockSentinel.addEventListener('release', () => console.log('Wake Lock released'));
-          console.log('Wake Lock acquired (Screen Wake Lock API)');
-        } else {
-          noSleep.enable();
-          console.log('Wake Lock enabled (NoSleep.js)');
-        }
-      } catch (err) {
-        console.error('Could not acquire wake lock:', err);
-      }
-    }
-    async function releaseWakeLock() {
-      try {
-        if (wakeLockSentinel) {
-          await wakeLockSentinel.release();
-          wakeLockSentinel = null;
-          console.log('Wake Lock released (Screen Wake Lock API)');
-        } else {
-          noSleep.disable();
-          console.log('Wake Lock disabled (NoSleep.js)');
-        }
-      } catch (err) {
-        console.error('Could not release wake lock:', err);
-      }
-    }
-    // Acquire wake lock on first user gesture
-    ['click', 'touchstart', 'pointerdown'].forEach(evt => {
-      document.addEventListener(evt, acquireWakeLock, { once: true, capture: true });
-    });
-    // Re-acquire wake lock if the page becomes visible again
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && wakeLockSentinel) {
-        acquireWakeLock();
-      }
-    });
+    // (NoSleep already initialized earlier)
 
     // Static nav items for Settings and Watch History
     const settingsNav = document.getElementById('settingsNav');
@@ -2150,7 +2120,8 @@ document.addEventListener('DOMContentLoaded', () => {
             videoPlayer.load();
         }
         
-        releaseWakeLock();
+        noSleep.disable();
+        console.log('Wake Lock disabled');
         
         showToast('Page reset - scrolling restored', 'info', 2000);
     }
