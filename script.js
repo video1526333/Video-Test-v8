@@ -123,33 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitPasswordButton = document.getElementById('submitPassword');
     const passwordMessage = document.getElementById('passwordMessage');
 
-    // --- Plyr Controls Visibility Setting ---
-    const alwaysShowControlsCheckbox = document.getElementById('alwaysShowControlsCheckbox');
-    const PLYR_CONTROLS_KEY = 'alwaysShowPlyrControls';
-    // Helper to get setting (default true)
-    function getAlwaysShowControlsSetting() {
-      const val = localStorage.getItem(PLYR_CONTROLS_KEY);
-      return val === null ? true : val === 'true';
-    }
-    // Helper to apply setting to Plyr controls
-    function applyPlyrControlsVisibility() {
-      if (plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
-        if (getAlwaysShowControlsSetting()) {
-          plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-        } else {
-          plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
-        }
-      }
-    }
-    // On checkbox change, update setting and controls
-    if (alwaysShowControlsCheckbox) {
-      alwaysShowControlsCheckbox.checked = getAlwaysShowControlsSetting();
-      alwaysShowControlsCheckbox.addEventListener('change', function() {
-        localStorage.setItem(PLYR_CONTROLS_KEY, this.checked);
-        applyPlyrControlsVisibility();
-      });
-    }
-
     // Share elements
     const shareButton = document.getElementById('shareButton');
     const shareModal = document.getElementById('shareModal');
@@ -2165,25 +2138,10 @@ document.addEventListener('DOMContentLoaded', () => {
             disableContextMenu: false,
             invertTime: false // Show current/total time instead of remaining time
         });
-        // Apply controls visibility based on setting
-        applyPlyrControlsVisibility();
-        // Listen for fullscreen changes to auto-hide controls if needed
-        function handleFullscreenChange() {
-          if (!getAlwaysShowControlsSetting() && plyrPlayer && plyrPlayer.elements && plyrPlayer.elements.controls) {
-            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
-            if (isFullscreen) {
-              plyrPlayer.elements.controls.classList.remove('plyr-controls--always-visible');
-            } else {
-              plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
-            }
-          } else {
-            applyPlyrControlsVisibility();
-          }
+        // Make controls always visible
+        if (plyrPlayer.elements && plyrPlayer.elements.controls) {
+            plyrPlayer.elements.controls.classList.add('plyr-controls--always-visible');
         }
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
     }
 
     // Loader and Error Overlay logic for elderly users
