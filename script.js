@@ -933,6 +933,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to play m3u8 videos
     function playM3u8Video(url, linkElement, retryCount = 0) {
+        // Show the loading indicator
+        const loadingIndicator = document.getElementById('videoLoadingIndicator');
+        if (loadingIndicator) loadingIndicator.style.display = 'flex';
+
+        const videoPlayer = document.getElementById('videoPlayer');
+        // Remove any previous event listeners to avoid multiple triggers
+        if (videoPlayer._loaderListeners) {
+            videoPlayer._loaderListeners.forEach(({event, handler}) => {
+                videoPlayer.removeEventListener(event, handler);
+            });
+        }
+        videoPlayer._loaderListeners = [];
+        // Handler to hide loader
+        const hideLoader = () => {
+            if (loadingIndicator) loadingIndicator.style.display = 'none';
+        };
+        // Add listeners for canplay and playing
+        videoPlayer.addEventListener('canplay', hideLoader, { once: true });
+        videoPlayer.addEventListener('playing', hideLoader, { once: true });
+        videoPlayer._loaderListeners.push({event: 'canplay', handler: hideLoader});
+        videoPlayer._loaderListeners.push({event: 'playing', handler: hideLoader});
+
         const MAX_RETRIES = 3;
         
         // Add a global loading timeout to prevent hanging
